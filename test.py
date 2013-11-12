@@ -4,12 +4,12 @@ import pygame
 from pygame.locals import *
 
 import depth_confusion
-print dir(depth_confusion.voxels)
+
 
 
 class GrassBlock(depth_confusion.voxels.Block):
 	def __init__(self):
-		super.__init__(self, 'grass-block')
+		depth_confusion.voxels.Block.__init__(self, 'grass-block')
 	
 	
 
@@ -47,9 +47,9 @@ class Game:
 		
 		voxel_handler = depth_confusion.voxels.VoxelHandler()
 		voxel_handler.add_voxel_type('grass-block', GrassBlock)
-		image_handler = depth_confusion.resource_loader.ImageHandler()
+		image_handler = depth_confusion.resource_loader.load_image_pack('example_image_pack/pack.json')
 		
-		self.world = depth_confusion.world_generator.generate_flat((64, 64, 4), 3, voxel_handler, image_handler, 'grass-block')
+		self.world = depth_confusion.world_generator.generate_flat((4, 4, 4), 3, voxel_handler, image_handler, 'grass-block')
 		
 		return True
 	
@@ -71,7 +71,7 @@ class Game:
 			#print event.button
 			if event.button == 1:
 				coordinates = self.world.map_to_world(*event.pos)
-				voxel = self.world.get_block(*coordinates)
+				voxel = self.world.get_voxel(*coordinates)
 				if voxel:
 					voxel.highlight()
 			
@@ -88,9 +88,9 @@ class Game:
 	
 	
 	def on_render(self):
+		self._screen.blit(self._background, (0, 0))
 		self.world.on_render(self._screen)
 		pygame.display.flip()
-		self._screen.blit(self._background, (0, 0))
 	
 	
 	def execute(self):

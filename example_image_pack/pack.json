@@ -1,0 +1,14 @@
+{
+	"__root__": "example_image_pack",
+	"__image_paths__":{
+		"overlay-dark-outline-0": "dark-edge-0.png",
+		"overlay-dark-outline-1": "dark-edge-1.png",
+		"overlay-dark-outline-2": "dark-edge-2.png",
+		"overlay-dark-outline-3": "dark-edge-3.png",
+		"overlay-dark-outline-4": "dark-edge-4.png",
+		"overlay-dark-outline-5": "dark-edge-5.png",
+		"overlay-yellow-highlight": "yellow-highlight.png",
+		"grass-block": "grass-block.png",
+		"mouse-help": "mouse-help.png"
+	}
+}

@@ -168,7 +168,8 @@ class VoxelWorld:
 		
 		#Check the image coordinate accuired above against the mouse helper image
 		#and make corrections to the map coordinates if necessary
-		pixel_color = pygame.Color(pygame.PixelArray(self.image_handler.get_image('mouse-help'))[ix][iy])
+		pixel_array = pygame.PixelArray(self.image_handler.get_image('mouse-help'))
+		pixel_color = pygame.Color(pixel_array[ix][iy])
 		#print pixel_color
 		if pixel_color == TEST_RED:
 			#print 'got red'
@@ -302,10 +303,14 @@ class Block(ElementaryVoxel):
 				if not self._world.is_voxel_rendered(mx + 1, my, mz -1):
 					self._dark_outline[4] = True
 		
-		if (self._world.is_voxel_rendered(mx, my, mz + 1) and
-		 self._world.is_voxel_rendered(mx + 1, my, mz) and
-		 self._world.is_voxel_rendered(mx, my + 1, mz)):
-			self._rendered = False
+		if self._world.is_voxel_rendered(mx, my, mz + 1):
+		
+			if (self._world.is_voxel_rendered(mx + 1, my, mz) and
+			    self._world.is_voxel_rendered(mx, my + 1, mz)):
+				self._rendered = False
+			
+			else:
+				self._rendered = True
 		
 		else:
 			self._rendered = True
@@ -378,7 +383,7 @@ class VoxelHandler:
 	
 	def construct_voxel(self, voxel_id, *args):
 		try:
-			return self._voxel_types[voxel_id](args)
+			return self._voxel_types[voxel_id]()
 		
 		except:
 			return Void()
