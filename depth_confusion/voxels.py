@@ -103,6 +103,10 @@ class VoxelWorld:
 		except AttributeError:
 			return False
 	
+	
+	def is_top_layer(self, mx, my, mz):
+		return mz == self._active_layer
+	
 	def set_voxel(self, mx, my, mz, voxel):
 		"""
 		Sets a voxel in a given world coordinate
@@ -314,10 +318,10 @@ class Block(ElementaryVoxel):
 		
 		if self._world.visibility_flag == ONLY_SHOW_EXPOSED:
 			if (isinstance(self._world.get_voxel(mx, my, mz + 1), Block) and
-			isinstance(self._world.get_voxel(mx + 1, my, mz), Block) and
-			isinstance(self._world.get_voxel(mx, my + 1, mz), Block) and
-			self._world.is_voxel_rendered(mx - 1, my, mz) and
-			self._world.is_voxel_rendered(mx, my - 1, mz)):
+			  not isinstance(self._world.get_voxel(mx + 1, my, mz), Void) and
+			  not isinstance(self._world.get_voxel(mx, my + 1, mz), Void) and
+			  not isinstance(self._world.get_voxel(mx - 1, my, mz), Void) and
+			  not isinstance(self._world.get_voxel(mx, my - 1, mz), Void)):
 				self._rendered = False
 			
 			else:
@@ -336,9 +340,17 @@ class Block(ElementaryVoxel):
 		target_surface.blit(self._world.image_handler.get_image(self._voxel_id), coordinates)
 		
 		#blit the dark outlines
+		(mx, my, mz) = self._coordinates
 		for i in xrange(len(self._dark_outline)):
 			if self._dark_outline[i]:
 				target_surface.blit(self._world.image_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
+			
+			elif (i == 0 or i == 1) and self._world.is_top_layer(mx, my, mz):
+				if i == 0 and not self._world.is_voxel_rendered(mx, my - 1, mz):
+					target_surface.blit(self._world.image_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
+				
+				elif i == 1 and not self._world.is_voxel_rendered(mx - 1, my, mz):
+					target_surface.blit(self._world.image_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
 		
 		#blit the highlight
 		#NOTE: do not rely on this it will be removed

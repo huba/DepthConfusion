@@ -49,7 +49,7 @@ class Game:
 		voxel_handler.add_voxel_type('grass-block', GrassBlock)
 		image_handler = depth_confusion.resource_loader.load_image_pack('example_image_pack/pack.json')
 		
-		self.world = depth_confusion.world_generator.generate_flat((4, 4, 4), 3, voxel_handler, image_handler, 'grass-block')
+		self.world = depth_confusion.world_generator.generate_flat((64, 64, 4), 3, voxel_handler, image_handler, 'grass-block')
 		self.world.visibility_flag = depth_confusion.voxels.ONLY_SHOW_EXPOSED
 		
 		return True
@@ -84,7 +84,8 @@ class Game:
 			
 			elif event.button == 3:
 				(mx, my, mz) = self.world.map_to_world(*event.pos)
-				self.world.set_voxel(mx, my, mz, depth_confusion.voxels.Void())
+				if self.world.is_voxel_rendered(mx, my, mz):
+					self.world.set_voxel(mx, my, mz, depth_confusion.voxels.Void())
 				
 	
 	
