@@ -15,6 +15,10 @@ TEST_GREEN = pygame.Color(0, 255, 0, 255)#-16711936
 TEST_YELLOW = pygame.Color(255, 0, 255, 255)#-16711681
 TEST_BLUE = pygame.Color(0, 0, 255, 255)#-65536
 
+#Visibility flags
+SHOW_ALL = 0
+ONLY_SHOW_EXPOSED = 1
+
 
 
 class OutOfIt(Exception):
@@ -29,9 +33,14 @@ class OutOfIt(Exception):
 
 
 class VoxelWorld:
-	def __init__(self, image_handler, voxel_handler, world_dimensions = (64, 64, 16), voxel_dimensions = (72, 36, 36), active_layer = 0):
+	def __init__(self, image_handler, voxel_handler,
+	             world_dimensions = (64, 64, 16),
+	             voxel_dimensions = (72, 36, 36),
+	             active_layer = 0,
+	             visibility_flag = ONLY_SHOW_EXPOSED):
 		self.image_handler = image_handler
 		self.voxel_handler = voxel_handler
+		self.visibility_flag = visibility_flag
 		self._world_dimensions = world_dimensions
 		self._voxel_dimensions = voxel_dimensions
 		self._grid = [None] * world_dimensions[WIDTH] * world_dimensions[HEIGHT] * world_dimensions[DEPTH]
@@ -303,10 +312,16 @@ class Block(ElementaryVoxel):
 				if not self._world.is_voxel_rendered(mx + 1, my, mz -1):
 					self._dark_outline[4] = True
 		
-		if (isinstance(self._world.get_voxel(mx, my, mz + 1), Block) and
-		 isinstance(self._world.get_voxel(mx + 1, my, mz), Block) and
-		 isinstance(self._world.get_voxel(mx, my + 1, mz), Block)):
-			self._rendered = False
+		if self._world.visibility_flag == ONLY_SHOW_EXPOSED:
+			if (isinstance(self._world.get_voxel(mx, my, mz + 1), Block) and
+			isinstance(self._world.get_voxel(mx + 1, my, mz), Block) and
+			isinstance(self._world.get_voxel(mx, my + 1, mz), Block) and
+			self._world.is_voxel_rendered(mx - 1, my, mz) and
+			self._world.is_voxel_rendered(mx, my - 1, mz)):
+				self._rendered = False
+			
+			else:
+				self._rendered = True
 		
 		else:
 			self._rendered = True

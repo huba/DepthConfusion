@@ -50,6 +50,7 @@ class Game:
 		image_handler = depth_confusion.resource_loader.load_image_pack('example_image_pack/pack.json')
 		
 		self.world = depth_confusion.world_generator.generate_flat((4, 4, 4), 3, voxel_handler, image_handler, 'grass-block')
+		self.world.visibility_flag = depth_confusion.voxels.ONLY_SHOW_EXPOSED
 		
 		return True
 	
