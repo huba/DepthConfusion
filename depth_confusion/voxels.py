@@ -303,14 +303,10 @@ class Block(ElementaryVoxel):
 				if not self._world.is_voxel_rendered(mx + 1, my, mz -1):
 					self._dark_outline[4] = True
 		
-		if self._world.is_voxel_rendered(mx, my, mz + 1):
-		
-			if (self._world.is_voxel_rendered(mx + 1, my, mz) and
-			    self._world.is_voxel_rendered(mx, my + 1, mz)):
-				self._rendered = False
-			
-			else:
-				self._rendered = True
+		if (isinstance(self._world.get_voxel(mx, my, mz + 1), Block) and
+		 isinstance(self._world.get_voxel(mx + 1, my, mz), Block) and
+		 isinstance(self._world.get_voxel(mx, my + 1, mz), Block)):
+			self._rendered = False
 		
 		else:
 			self._rendered = True
