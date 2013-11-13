@@ -3,32 +3,7 @@ This module has the basic elements of a voxel based grid
 Author: Huba Nagy
 """
 import pygame
-
-#indexes in coordinate tuples for better readibility
-WIDTH = 0
-HEIGHT = 1
-DEPTH = 2
-
-#Colors for mapping coordinates
-TEST_RED = pygame.Color(255, 0, 0, 255)#-16776961
-TEST_GREEN = pygame.Color(0, 255, 0, 255)#-16711936
-TEST_YELLOW = pygame.Color(255, 0, 255, 255)#-16711681
-TEST_BLUE = pygame.Color(0, 0, 255, 255)#-65536
-
-#Visibility flags
-SHOW_ALL = 0
-ONLY_SHOW_EXPOSED = 1
-
-
-
-class OutOfIt(Exception):
-	def __init__(self, msg, value):
-		self.msg = msg
-		self.value = value
-	
-	
-	def __repr__(self):
-		return '{0} {1}'.format(self.msg, self.value)
+from common_util import *
 
 
 
@@ -40,13 +15,14 @@ class VoxelWorld:
 	             visibility_flag = ONLY_SHOW_EXPOSED):
 		self.image_handler = image_handler
 		self.voxel_handler = voxel_handler
-		self.visibility_flag = visibility_flag
+		
 		self._world_dimensions = world_dimensions
 		self._voxel_dimensions = voxel_dimensions
 		self._grid = [None] * world_dimensions[WIDTH] * world_dimensions[HEIGHT] * world_dimensions[DEPTH]
 		
 		self._translation = (0, 0)
 		self._active_layer = active_layer
+		self.visibility_flag = visibility_flag
 	
 	
 	def translate(self, dx, dy):
@@ -107,6 +83,7 @@ class VoxelWorld:
 	def is_top_layer(self, mx, my, mz):
 		return mz == self._active_layer
 	
+	
 	def set_voxel(self, mx, my, mz, voxel):
 		"""
 		Sets a voxel in a given world coordinate
@@ -136,7 +113,7 @@ class VoxelWorld:
 	
 	def _validate_coordinates(self, x, y, z):
 		"""
-		Validates that the world coordinot_of_this_worldates are actually within the world
+		Validates that the world coordinates are actually within the world
 		Make sure you handle the exceptions when you use this!!!
 		"""
 		if x < 0:
@@ -387,7 +364,7 @@ class Block(ElementaryVoxel):
 
 class Void(ElementaryVoxel):
 	def __init__(self, dimensions = (72, 36, 36)):
-		ElementaryVoxel.__init__(self, 0, dimensions)
+		ElementaryVoxel.__init__(self, 'void', dimensions)
 		self._rendered = False
 	
 	
