@@ -364,7 +364,7 @@ class Block(ElementaryVoxel):
 
 class Void(ElementaryVoxel):
 	def __init__(self, dimensions = (72, 36, 36)):
-		ElementaryVoxel.__init__(self, 0, dimensions)
+		ElementaryVoxel.__init__(self, 'void', dimensions)
 		self._rendered = False
 	
 	
