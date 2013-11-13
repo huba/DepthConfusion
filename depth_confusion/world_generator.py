@@ -3,7 +3,7 @@ A utility module for generating maps
 Author: Huba Nagy
 """
 import voxels
-from voxels import WIDTH, HEIGHT, DEPTH
+from common_util import *
 
 
 def generate_flat(dimensions, fill_height, voxel_handler, image_handler, fill_voxel_id):

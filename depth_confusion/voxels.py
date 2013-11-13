@@ -3,32 +3,7 @@ This module has the basic elements of a voxel based grid
 Author: Huba Nagy
 """
 import pygame
-
-#indexes in coordinate tuples for better readibility
-WIDTH = 0
-HEIGHT = 1
-DEPTH = 2
-
-#Colors for mapping coordinates
-TEST_RED = pygame.Color(255, 0, 0, 255)#-16776961
-TEST_GREEN = pygame.Color(0, 255, 0, 255)#-16711936
-TEST_YELLOW = pygame.Color(255, 0, 255, 255)#-16711681
-TEST_BLUE = pygame.Color(0, 0, 255, 255)#-65536
-
-#Visibility flags
-SHOW_ALL = 0
-ONLY_SHOW_EXPOSED = 1
-
-
-
-class OutOfIt(Exception):
-	def __init__(self, msg, value):
-		self.msg = msg
-		self.value = value
-	
-	
-	def __repr__(self):
-		return '{0} {1}'.format(self.msg, self.value)
+from common_util import *
 
 
 
