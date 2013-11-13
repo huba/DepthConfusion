@@ -15,13 +15,14 @@ class VoxelWorld:
 	             visibility_flag = ONLY_SHOW_EXPOSED):
 		self.image_handler = image_handler
 		self.voxel_handler = voxel_handler
-		self.visibility_flag = visibility_flag
+		
 		self._world_dimensions = world_dimensions
 		self._voxel_dimensions = voxel_dimensions
 		self._grid = [None] * world_dimensions[WIDTH] * world_dimensions[HEIGHT] * world_dimensions[DEPTH]
 		
 		self._translation = (0, 0)
 		self._active_layer = active_layer
+		self.visibility_flag = visibility_flag
 	
 	
 	def translate(self, dx, dy):
@@ -82,6 +83,7 @@ class VoxelWorld:
 	def is_top_layer(self, mx, my, mz):
 		return mz == self._active_layer
 	
+	
 	def set_voxel(self, mx, my, mz, voxel):
 		"""
 		Sets a voxel in a given world coordinate
@@ -111,7 +113,7 @@ class VoxelWorld:
 	
 	def _validate_coordinates(self, x, y, z):
 		"""
-		Validates that the world coordinot_of_this_worldates are actually within the world
+		Validates that the world coordinates are actually within the world
 		Make sure you handle the exceptions when you use this!!!
 		"""
 		if x < 0:
