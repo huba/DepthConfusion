@@ -146,14 +146,14 @@ class GridElement(object):
 class ElementClassHandler:
 	def __init__(self, void_type):
 		self._element_types = {}
-		self.add_element_type('void', void_type)
+		self._add_element_type('void', void_type)
 	
 	
-	def add_element_type(self, element_id, base_class):
+	def _add_element_type(self, element_id, base_class):
 		self._element_types[element_id] = base_class
 	
 	
-	def construct_element(self, element_id, *args):
+	def _construct_element(self, element_id, *args):
 		try:
 			return self._element_types[element_id]()
 		

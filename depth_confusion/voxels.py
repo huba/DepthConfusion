@@ -4,6 +4,7 @@ Author: Huba Nagy
 """
 import pygame
 from common_util import *
+from world_base import *
 
 
 
@@ -371,22 +372,11 @@ class Void(ElementaryVoxel):
 
 
 
-class VoxelHandler:
+class VoxelHandler(ElementClassHandler):
 	def __init__(self):
-		self._voxel_types = {}
-		self.add_voxel_type('void', Void)
-	
-	
-	def add_voxel_type(self, voxel_id, base_class):
-		self._voxel_types[voxel_id] = base_class
-	
-	
-	def construct_voxel(self, voxel_id, *args):
-		try:
-			return self._voxel_types[voxel_id]()
-		
-		except:
-			return Void()
+		ElementClassHandler.__init__(self, Void)
+		self.add_voxel_type = self._add_element_type
+		self.construct_voxel = self._construct_element
 	
 	
 
