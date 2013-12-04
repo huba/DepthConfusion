@@ -14,6 +14,6 @@ def generate_flat(dimensions, fill_height, voxel_handler, image_handler, fill_vo
 		for y in xrange(dimensions[HEIGHT]):
 			for x in xrange(dimensions[WIDTH]):
 				new_voxel = voxel_handler.construct_voxel('grass-block') if z < fill_height else voxel_handler.construct_voxel('void')
-				brave_new_world.set_voxel(x, y, z, new_voxel)
+				brave_new_world[(x, y, z)] = new_voxel
 	
 	return brave_new_world

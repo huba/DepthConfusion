@@ -8,26 +8,23 @@ from world_base import *
 
 
 
-class VoxelWorld:
-	def __init__(self, image_handler, voxel_handler,
+class VoxelWorld(WorldBase):
+	def __init__(self, resource_handler, voxel_handler,
 	             world_dimensions = (64, 64, 16),
 	             voxel_dimensions = (72, 36, 36),
 	             active_layer = 0,
 	             visibility_flag = ONLY_SHOW_EXPOSED):
-		self.image_handler = image_handler
-		self.voxel_handler = voxel_handler
+		
 		
 		self._world_dimensions = world_dimensions
 		self._voxel_dimensions = voxel_dimensions
-		self._grid = [None] * world_dimensions[WIDTH] * world_dimensions[HEIGHT] * world_dimensions[DEPTH]
+		grid_length = world_dimensions[WIDTH] * world_dimensions[HEIGHT] * world_dimensions[DEPTH]
 		
-		self._translation = (0, 0)
 		self._active_layer = active_layer
 		self.visibility_flag = visibility_flag
-	
-	
-	def translate(self, dx, dy):
-		self._translation = (dx, dy)
+		
+		WorldBase.__init__(self, resource_handler, voxel_handler,
+		                   grid_length, (0, 0))
 	
 	
 	def scroll_layer(self, dl):
@@ -36,21 +33,28 @@ class VoxelWorld:
 	
 	
 	def on_update(self):
-		for voxel in self._grid:
+		for mx, my, mz, voxel in self:
 			if voxel:
 				voxel.on_update()
 	
+	
+	def __iter__(self):
+		for mx in xrange(self._world_dimensions[WIDTH]):
+			for my in xrange(self._world_dimensions[HEIGHT]):
+				for mz in xrange(self._world_dimensions[DEPTH]):
+					voxel = self[(mx, my, mz)]
+					yield mx, my, mz, voxel
 	
 	def on_render(self, target_surface):
 		"""
 		This function calls the render function of all voxels
 		"""
-		for mx in xrange(self._world_dimensions[WIDTH]):
-			for my in xrange(self._world_dimensions[HEIGHT]):
-				for mz in xrange(self._active_layer + 1):
-					voxel = self.get_voxel(mx, my, mz)
-					if isinstance(voxel, ElementaryVoxel):
-						voxel.on_render(target_surface, self._translation)
+		for mx, my, mz, voxel in self:
+			if self.visibility_flag == ONLY_SHOW_EXPOSED and mz > self._active_layer + 1:
+				   return
+			
+			if isinstance(voxel, ElementaryVoxel):
+				voxel.on_render(target_surface, self._translation)
 	
 	
 	def on_event(self, event):
@@ -61,62 +65,33 @@ class VoxelWorld:
 		return self._world_dimensions[dimension]
 	
 	
-	def get_voxel(self, mx, my, mz):
-		"""
-		Returns a handle to a voxel based on world coordinates
-		"""
+	def is_voxel_rendered(self, coordinate):
 		try:
-			self._validate_coordinates(mx, my, mz)
-			return self._grid[self._get_index(mx, my, mz)]
-		
-		except OutOfIt as out_of_this_world:
-			print out_of_this_world
-	
-	
-	def is_voxel_rendered(self, mx, my, mz):
-		try:
-			return self.get_voxel(mx, my, mz).is_rendered()
+			return self[coordinate].is_rendered()
 		
 		except AttributeError:
 			return False
 	
 	
-	def is_top_layer(self, mx, my, mz):
-		return mz == self._active_layer
+	def is_top_layer(self, coordinate):
+		return coordinate[DEPTH] == self._active_layer
 	
 	
-	def set_voxel(self, mx, my, mz, voxel):
-		"""
-		Sets a voxel in a given world coordinate
-		"""
-		try:
-			self._validate_coordinates(mx, my, mz)
-			old_voxel = self.get_voxel(mx, my, mz)
-			
-			self._grid[self._get_index(mx, my, mz)] = voxel
-			voxel.put_into_world(self, mx, my, mz)
-			
-			if old_voxel:
-				old_voxel.on_destroy()
-			
-			voxel.on_create()
-		
-		except OutOfIt as out_of_this_world:
-			print out_of_this_world
-	
-	
-	def _get_index(self, x, y, z):
+	def _coordinate_to_index(self, coordinate):
 		"""
 		Calculates the index in the list holding the _grid based on x, y and z 
 		coordinates. z major y secondary and x minor
 		"""
+		(x, y, z) = coordinate
 		return self._world_dimensions[WIDTH] * self._world_dimensions[HEIGHT] * z + self._world_dimensions[HEIGHT] * y + x
 	
-	def _validate_coordinates(self, x, y, z):
+	
+	def _validate_coordinate(self, coordinate):
 		"""
 		Validates that the world coordinates are actually within the world
 		Make sure you handle the exceptions when you use this!!!
 		"""
+		(x, y, z) = coordinate
 		if x < 0:
 			raise OutOfIt('X coordinate is less than 0...' , x)
 		
@@ -136,10 +111,11 @@ class VoxelWorld:
 			raise OutOfIt('Z coordinate is more than the depth of the world...' , z)
 	
 	
-	def map_to_world(self, sx, sy):
+	def map_to_world(self, screen_coordinate):
 		"""
 		Maps screen coordinates to world coordinates
 		"""
+		(sx, sy) = screen_coordinate
 		#Apply translation to screen coordinates
 		sx -= self._translation[0]
 		sy -= self._translation[1]
@@ -159,7 +135,7 @@ class VoxelWorld:
 		
 		#Check the image coordinate accuired above against the mouse helper image
 		#and make corrections to the map coordinates if necessary
-		pixel_array = pygame.PixelArray(self.image_handler.get_image('mouse-help'))
+		pixel_array = pygame.PixelArray(self.resource_handler.get_image('mouse-help'))
 		pixel_color = pygame.Color(pixel_array[ix][iy])
 		#print pixel_color
 		if pixel_color == TEST_RED:
@@ -195,7 +171,7 @@ class VoxelWorld:
 
 
 
-class ElementaryVoxel:
+class ElementaryVoxel(GridElement):
 	def __init__(self, voxel_id, dimensions = (72, 36, 36)):
 		self._dimensions = dimensions
 		self._image_size = (dimensions[WIDTH], dimensions[HEIGHT] + dimensions[DEPTH])
@@ -265,41 +241,41 @@ class Block(ElementaryVoxel):
 		self._dark_outline = [False] * 6
 		(mx, my, mz) = self._coordinates
 		#print 'coordinates: {0}, {1}, {2}'.format(*self._coordinates)
-		if not self._world.is_voxel_rendered(mx, my - 1, mz):
+		if not self._world.is_voxel_rendered((mx, my - 1, mz)):
 			#print '\tNothing behind'
-			if not self._world.is_voxel_rendered(mx + 1, my - 1, mz):
+			if not self._world.is_voxel_rendered((mx + 1, my - 1, mz)):
 				#print '\t\tNothing to the left'
 				self._dark_outline[5] = True
 			
-			if not self._world.is_voxel_rendered(mx, my - 1, mz + 1):
+			if not self._world.is_voxel_rendered((mx, my - 1, mz + 1)):
 				#print '\t\tNothing over'
 				self._dark_outline[0] = True
 		
-		if not self._world.is_voxel_rendered(mx - 1, my, mz):
+		if not self._world.is_voxel_rendered((mx - 1, my, mz)):
 			#print '\tNothing to the right'
-			if not self._world.is_voxel_rendered(mx - 1, my + 1, mz):
+			if not self._world.is_voxel_rendered((mx - 1, my + 1, mz)):
 				#print '\t\tNothing infront'
 				self._dark_outline[2] = True
 			
-			if not self._world.is_voxel_rendered(mx - 1, my, mz + 1):
+			if not self._world.is_voxel_rendered((mx - 1, my, mz + 1)):
 				#print '\t\tNothing over'
 				self._dark_outline[1] = True
 		
-		if not self._world.is_voxel_rendered(mx, my, mz - 1):
-			if not self._world.is_voxel_rendered(mx, my + 1, mz):
-				if not self._world.is_voxel_rendered(mx, my + 1, mz -1):
+		if not self._world.is_voxel_rendered((mx, my, mz - 1)):
+			if not self._world.is_voxel_rendered((mx, my + 1, mz)):
+				if not self._world.is_voxel_rendered((mx, my + 1, mz -1)):
 					self._dark_outline[3] = True
 			
-			if not self._world.is_voxel_rendered(mx + 1, my, mz):
-				if not self._world.is_voxel_rendered(mx + 1, my, mz -1):
+			if not self._world.is_voxel_rendered((mx + 1, my, mz)):
+				if not self._world.is_voxel_rendered((mx + 1, my, mz -1)):
 					self._dark_outline[4] = True
 		
 		if self._world.visibility_flag == ONLY_SHOW_EXPOSED:
-			if (isinstance(self._world.get_voxel(mx, my, mz + 1), Block) and
-			  not isinstance(self._world.get_voxel(mx + 1, my, mz), Void) and
-			  not isinstance(self._world.get_voxel(mx, my + 1, mz), Void) and
-			  not isinstance(self._world.get_voxel(mx - 1, my, mz), Void) and
-			  not isinstance(self._world.get_voxel(mx, my - 1, mz), Void)):
+			if (isinstance(self._world[(mx, my, mz + 1)], Block) and
+			  not isinstance(self._world[(mx + 1, my, mz)], Void) and
+			  not isinstance(self._world[(mx, my + 1, mz)], Void) and
+			  not isinstance(self._world[(mx - 1, my, mz)], Void) and
+			  not isinstance(self._world[(mx, my - 1, mz)], Void)):
 				self._rendered = False
 			
 			else:
@@ -315,25 +291,25 @@ class Block(ElementaryVoxel):
 		
 		coordinates = (self._screen_coordinates[0] + translation[0], self._screen_coordinates[1] + translation[1])
 		#blit the base image
-		target_surface.blit(self._world.image_handler.get_image(self._voxel_id), coordinates)
+		target_surface.blit(self._world.resource_handler.get_image(self._voxel_id), coordinates)
 		
 		#blit the dark outlines
 		(mx, my, mz) = self._coordinates
 		for i in xrange(len(self._dark_outline)):
 			if self._dark_outline[i]:
-				target_surface.blit(self._world.image_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
+				target_surface.blit(self._world.resource_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
 			
-			elif (i == 0 or i == 1) and self._world.is_top_layer(mx, my, mz):
-				if i == 0 and not self._world.is_voxel_rendered(mx, my - 1, mz):
-					target_surface.blit(self._world.image_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
+			elif (i == 0 or i == 1) and self._world.is_top_layer((mx, my, mz)):
+				if i == 0 and not self._world.is_voxel_rendered((mx, my - 1, mz)):
+					target_surface.blit(self._world.resource_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
 				
-				elif i == 1 and not self._world.is_voxel_rendered(mx - 1, my, mz):
-					target_surface.blit(self._world.image_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
+				elif i == 1 and not self._world.is_voxel_rendered((mx - 1, my, mz)):
+					target_surface.blit(self._world.resource_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
 		
 		#blit the highlight
 		#NOTE: do not rely on this it will be removed
 		if self._highlighted:
-			target_surface.blit(self._world.image_handler.get_image('overlay-yellow-highlight'), coordinates)
+			target_surface.blit(self._world.resource_handler.get_image('overlay-yellow-highlight'), coordinates)
 	
 	
 	def on_create(self):
@@ -344,7 +320,7 @@ class Block(ElementaryVoxel):
 		for ox in xrange(-1, 2):
 			for oy in xrange(-1, 2):
 				for oz in xrange(-1, 2):
-					voxel = self._world.get_voxel(mx + ox, my + oy, mz + oz)
+					voxel = self._world[(mx + ox, my + oy, mz + oz)]
 					if isinstance(voxel, Block):
 						voxel.update_visibility()
 	
@@ -355,7 +331,7 @@ class Block(ElementaryVoxel):
 		for ox in xrange(-1, 2):
 			for oy in xrange(-1, 2):
 				for oz in xrange(-1, 2):
-					voxel = self._world.get_voxel(mx + ox, my + oy, mz + oz)
+					voxel = self._world[(mx + ox, my + oy, mz + oz)]
 					if isinstance(voxel, Block):
 						voxel.update_visibility()
 	
@@ -375,8 +351,8 @@ class Void(ElementaryVoxel):
 class VoxelHandler(ElementClassHandler):
 	def __init__(self):
 		ElementClassHandler.__init__(self, Void)
-		self.add_voxel_type = self._add_element_type
-		self.construct_voxel = self._construct_element
+		self.add_voxel_type = self.add_element_type
+		self.construct_voxel = self.construct_element
 	
 	
 

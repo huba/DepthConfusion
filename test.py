@@ -71,8 +71,8 @@ class Game:
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			#print event.button
 			if event.button == 1:
-				coordinates = self.world.map_to_world(*event.pos)
-				voxel = self.world.get_voxel(*coordinates)
+				coordinate = self.world.map_to_world(event.pos)
+				voxel = self.world[coordinate]
 				if voxel:
 					voxel.highlight()
 			
@@ -83,9 +83,9 @@ class Game:
 				self.world.scroll_layer(-1)
 			
 			elif event.button == 3:
-				(mx, my, mz) = self.world.map_to_world(*event.pos)
-				if self.world.is_voxel_rendered(mx, my, mz):
-					self.world.set_voxel(mx, my, mz, depth_confusion.voxels.Void())
+				coordinate = self.world.map_to_world(event.pos)
+				if self.world.is_voxel_rendered(coordinate):
+					del self.world[coordinate]
 				
 	
 	

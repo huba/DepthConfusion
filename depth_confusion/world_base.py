@@ -22,6 +22,10 @@ class WorldBase(object):
 		self._translation = translation
 	
 	
+	def translate(self, dx, dy):
+		self._translation = (dx, dy)
+	
+	
 	def on_update(self):
 		pass
 	
@@ -45,15 +49,25 @@ class WorldBase(object):
 		try:
 			#validate the coordinate and calculate the index of the desired grid element
 			self._validate_coordinate(coordinate)
+			old_element = self[coordinate]
 			index = self._coordinate_to_index(coordinate)
 			
 			#replace the given grid element
 			self._grid[index] = grid_element
+			grid_element.put_into_world(self, *coordinate)
+			
+			if old_element:
+				old_element.on_destroy()
+			
+			grid_element.on_create()
 		
 		except OutOfIt as out_of_this_world:
 			print out_of_this_world
 		
 		except ValueError as value_error:
+			print 'Not enough digits in the coordinate {0}!'.format(coordinate)
+		
+		except TypeError as type_error:
 			print 'Not enough digits in the coordinate {0}!'.format(coordinate)
 	
 	
@@ -81,7 +95,7 @@ class WorldBase(object):
 		Replaces the element at the given grid coordinate with
 		the void type element of the element_class_handler...
 		"""
-		pass
+		self[coordinate] = self.element_class_handler.construct_element('void')
 	
 	
 	def _validate_coordinate(self, coordinate):
@@ -146,14 +160,14 @@ class GridElement(object):
 class ElementClassHandler:
 	def __init__(self, void_type):
 		self._element_types = {}
-		self._add_element_type('void', void_type)
+		self.add_element_type('void', void_type)
 	
 	
-	def _add_element_type(self, element_id, base_class):
+	def add_element_type(self, element_id, base_class):
 		self._element_types[element_id] = base_class
 	
 	
-	def _construct_element(self, element_id, *args):
+	def construct_element(self, element_id, *args):
 		try:
 			return self._element_types[element_id]()
 		
