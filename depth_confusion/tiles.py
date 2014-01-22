@@ -17,12 +17,6 @@ class TiledWorld:
 		self._world_dimensions = world_dimensions
 		self._tile_dimensions = tile_dimensions
 		self._grid = [None] * world_dimensions[WIDTH] * world_dimensions[HEIGHT]
-		
-		self._translation = (0, 0)
-	
-	
-	def translate(self, dx, dy):
-		self._translation = (dx, dy)
 	
 	
 	def on_update(self):
@@ -79,22 +73,20 @@ class TiledWorld:
 			raise OutOfIt('Y coordinate is more than the height of the world...' , y)
 	
 	
-	def map_to_world(self, sx, sy):
+	def global_to_map(self, global_coordinates):
 		"""
 		Maps screen coordinates to world coordinates
 		"""
-		#Apply translation to screen coordinates
-		sx -= self._translation[0]
-		sy -= self._translation[1]
+		(gx, gy) = global_coordinates
 		
 		#Calculate rough x, y, z coordinate in the map
-		mx = ((sy + self._active_layer * self._voxel_dimensions[DEPTH]) / (self._voxel_dimensions[HEIGHT] / 2) - sx / (self._voxel_dimensions[WIDTH] / 2)) / 2
-		my = (sx / (self._voxel_dimensions[WIDTH] / 2) + (sy) / (self._voxel_dimensions[HEIGHT] / 2)) / 2
+		mx = ((gy + self._active_layer * self._voxel_dimensions[DEPTH]) / (self._voxel_dimensions[HEIGHT] / 2) - gx / (self._voxel_dimensions[WIDTH] / 2)) / 2
+		my = (gx / (self._voxel_dimensions[WIDTH] / 2) + (gy) / (self._voxel_dimensions[HEIGHT] / 2)) / 2
 		
 		#Calculate where the corner of the image is
-		cx, cy = self.map_to_screen(mx, my)
+		cx, cy = self.map_to_global(mx, my)
 		#calculate where the screen cordinate is relative to the corner of the image
-		ix, iy = sx - cx, sy - cy
+		ix, iy = gx - cx, gy - cy
 		
 		#print 'corner: {0}, {1}'.format(cx, cy)
 		#print 'image: {0}, {1}'.format(ix, iy)
@@ -123,15 +115,15 @@ class TiledWorld:
 		return (mx, my)
 	
 	
-	def map_to_screen(self, mx, my):
+	def map_to_global(self, mx, my):
 		"""
 		Maps world coordinates the coordinates of the top left corner of the image on the world surface.
 		No translation is applied yet.
 		"""
-		sx = - mx * (self._voxel_dimensions[WIDTH] / 2) + my * (self._voxel_dimensions[WIDTH] / 2)
-		sy = my * (self._voxel_dimensions[HEIGHT] / 2)  + mx * (self._voxel_dimensions[HEIGHT] / 2)
+		gx = - mx * (self._voxel_dimensions[WIDTH] / 2) + my * (self._voxel_dimensions[WIDTH] / 2)
+		gy = my * (self._voxel_dimensions[HEIGHT] / 2)  + mx * (self._voxel_dimensions[HEIGHT] / 2)
 		
-		return (sx, sy)
+		return (gx, gy)
 
 
 
@@ -149,7 +141,7 @@ class ElementaryTile:
 	def put_into_world(self, world, x, y, ):
 		self._coordinates = (x, y)
 		self._world = world
-		self._screen_coordinates = self._world.map_to_screen(*self._coordinates)
+		self._screen_coordinates = self._world.map_to_global(*self._coordinates)
 	
 	
 	def on_update(self):
@@ -204,19 +196,12 @@ class Void(ElementaryTile):
 
 
 
-class TileHandler:
+class TileHandler(ElementClassHandler):
 	def __init__(self):
-		self._tile_types = {}
-		self.add_tile_type('void', Void)
+		ElementClassHandler.__init__(self, Void)
+		self.add_tile_type = self.add_element_type
+		self.construct_tile = self.construct_element
 	
 	
-	def add_tile_type(self, tile_id, base_class):
-		self._tile_types[tile_id] = base_class
-	
-	
-	def construct_tile(self, tile_id, *args):
-		try:
-			return self._tile_types(tile_id]()
-		
-		except:
-			return Void()
+
+
