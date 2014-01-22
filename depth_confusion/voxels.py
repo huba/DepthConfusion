@@ -1,5 +1,7 @@
 """
-This module has the basic elements of a voxel based grid
+This module has the basic elements of a voxel based grid.
+All the pixel coordinates are global here. This means bsolutely no scene
+or screen pixel coordinates!"
 Author: Huba Nagy
 """
 import pygame
@@ -115,9 +117,10 @@ class VoxelWorld(WorldBase):
 			raise OutOfIt('Z coordinate is more than the depth of the world...' , z)
 	
 	
-	def map_to_world(self, global_coordinates):
+	def global_to_map(self, global_coordinates):
 		"""
-		Maps global coordinates to map coordinates
+		Maps global coordinates to map coordinates. Mainly used to tell which 
+		voxel the mouse pointer is on.
 		"""
 		(gx, gy) = global_coordinates
 		# DON'T Apply translation to screen coordinates
@@ -130,7 +133,7 @@ class VoxelWorld(WorldBase):
 		mz = self._active_layer
 		
 		#Calculate where the corner of the image is
-		cx, cy = self.map_to_screen(mx, my, mz)
+		cx, cy = self.map_to_global(mx, my, mz)
 		#calculate where the screen cordinate is relative to the corner of the image
 		ix, iy = gx - cx, gy - cy
 		
@@ -161,15 +164,15 @@ class VoxelWorld(WorldBase):
 		return (mx, my, mz)
 	
 	
-	def map_to_screen(self, mx, my, mz):
+	def map_to_global(self, mx, my, mz):
 		"""
 		Maps world coordinates the coordinates of the top left corner of the image on the world surface.
 		No translation is applied yet.
 		"""
-		sx = - mx * (self._voxel_dimensions[WIDTH] / 2) + my * (self._voxel_dimensions[WIDTH] / 2)
-		sy = my * (self._voxel_dimensions[HEIGHT] / 2)  + mx * (self._voxel_dimensions[HEIGHT] / 2) - mz * self._voxel_dimensions[DEPTH]
+		gx = - mx * (self._voxel_dimensions[WIDTH] / 2) + my * (self._voxel_dimensions[WIDTH] / 2)
+		gy = my * (self._voxel_dimensions[HEIGHT] / 2)  + mx * (self._voxel_dimensions[HEIGHT] / 2) - mz * self._voxel_dimensions[DEPTH]
 		
-		return (sx, sy)
+		return (gx, gy)
 	
 	
 
@@ -196,7 +199,7 @@ class ElementaryVoxel(GridElement):
 	def put_into_world(self, world, x, y, z):
 		self._coordinates = (x, y, z)
 		self._world = world
-		self._screen_coordinates = self._world.map_to_screen(*self._coordinates)
+		self._screen_coordinates = self._world.map_to_global(*self._coordinates)
 		self.rect = pygame.Rect(self._screen_coordinates, self._image_size)
 	
 	

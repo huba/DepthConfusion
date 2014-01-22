@@ -19,12 +19,6 @@ class WorldBase(object):
 		self.element_class_handler = element_class_handler
 		
 		self._grid = [None] * grid_length
-		self._translation = translation
-	
-	
-	def translate(self, dx, dy):
-		#self._translation = (dx, dy)
-		pass
 	
 	
 	def on_update(self):
