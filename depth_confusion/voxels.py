@@ -45,16 +45,20 @@ class VoxelWorld(WorldBase):
 					voxel = self[(mx, my, mz)]
 					yield mx, my, mz, voxel
 	
-	def on_render(self, target_surface):
+	
+	def on_render(self, viewport):
 		"""
-		This function calls the render function of all voxels
+		This function calls the render function of all voxels onto a given viewport
 		"""
 		for mx, my, mz, voxel in self:
 			if self.visibility_flag == ONLY_SHOW_EXPOSED and mz > self._active_layer + 1:
 				   return
 			
+			#Make sure it does not render anything else
 			if isinstance(voxel, ElementaryVoxel):
-				voxel.on_render(target_surface, self._translation)
+				#Also make sure that only voxels in the view are rendered
+				if viewport.scene.get_rect().colliderect(viewport.global_to_scene(voxel.rect)):
+					voxel.on_render(viewport.scene, viewport.scene_placement)
 	
 	
 	def on_event(self, event):
@@ -111,24 +115,24 @@ class VoxelWorld(WorldBase):
 			raise OutOfIt('Z coordinate is more than the depth of the world...' , z)
 	
 	
-	def map_to_world(self, screen_coordinate):
+	def map_to_world(self, global_coordinates):
 		"""
-		Maps screen coordinates to world coordinates
+		Maps global coordinates to map coordinates
 		"""
-		(sx, sy) = screen_coordinate
-		#Apply translation to screen coordinates
-		sx -= self._translation[0]
-		sy -= self._translation[1]
+		(gx, gy) = global_coordinates
+		# DON'T Apply translation to screen coordinates
+		#gx -= self._translation[0]
+		#gy -= self._translation[1]
 		
 		#Calculate rough x, y, z coordinate in the map
-		mx = ((sy + self._active_layer * self._voxel_dimensions[DEPTH]) / (self._voxel_dimensions[HEIGHT] / 2) - sx / (self._voxel_dimensions[WIDTH] / 2)) / 2
-		my = (sx / (self._voxel_dimensions[WIDTH] / 2) + (sy + self._active_layer * self._voxel_dimensions[DEPTH]) / (self._voxel_dimensions[HEIGHT] / 2) ) / 2
+		mx = ((gy + self._active_layer * self._voxel_dimensions[DEPTH]) / (self._voxel_dimensions[HEIGHT] / 2) - gx / (self._voxel_dimensions[WIDTH] / 2)) / 2
+		my = (gx / (self._voxel_dimensions[WIDTH] / 2) + (gy + self._active_layer * self._voxel_dimensions[DEPTH]) / (self._voxel_dimensions[HEIGHT] / 2) ) / 2
 		mz = self._active_layer
 		
 		#Calculate where the corner of the image is
 		cx, cy = self.map_to_screen(mx, my, mz)
 		#calculate where the screen cordinate is relative to the corner of the image
-		ix, iy = sx - cx, sy - cy
+		ix, iy = gx - cx, gy - cy
 		
 		#print 'corner: {0}, {1}'.format(cx, cy)
 		#print 'image: {0}, {1}'.format(ix, iy)
@@ -177,6 +181,7 @@ class ElementaryVoxel(GridElement):
 		self._image_size = (dimensions[WIDTH], dimensions[HEIGHT] + dimensions[DEPTH])
 		self._coordinates = (0, 0, 0)
 		self._screen_coordinates = (0, 0)
+		self.rect = pygame.Rect(self._screen_coordinates, self._image_size)
 		
 		self._world = None
 		self._voxel_id = voxel_id
@@ -192,6 +197,7 @@ class ElementaryVoxel(GridElement):
 		self._coordinates = (x, y, z)
 		self._world = world
 		self._screen_coordinates = self._world.map_to_screen(*self._coordinates)
+		self.rect = pygame.Rect(self._screen_coordinates, self._image_size)
 	
 	
 	def highlight(self):

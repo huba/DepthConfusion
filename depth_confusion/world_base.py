@@ -23,7 +23,8 @@ class WorldBase(object):
 	
 	
 	def translate(self, dx, dy):
-		self._translation = (dx, dy)
+		#self._translation = (dx, dy)
+		pass
 	
 	
 	def on_update(self):

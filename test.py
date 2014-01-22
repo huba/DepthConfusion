@@ -33,7 +33,7 @@ class Game:
 		self._running = False
 		self._screen = None
 		self._size = (self._width, self._height) = (w, h)
-		self._camera = Camera(0, 0)
+		#self._camera = Camera(0, 0)
 	
 	
 	def on_init(self):
@@ -45,18 +45,27 @@ class Game:
 		
 		pygame.mouse.set_visible(True)
 		
+		#load resources
 		voxel_handler = depth_confusion.voxels.VoxelHandler()
 		voxel_handler.add_voxel_type('grass-block', GrassBlock)
 		image_handler = depth_confusion.resource_loader.load_image_pack('example_image_pack/pack.json')
 		
+		#generate the world
 		self.world = depth_confusion.world_generator.generate_flat((64, 64, 4), 3, voxel_handler, image_handler, 'grass-block')
 		self.world.visibility_flag = depth_confusion.voxels.ONLY_SHOW_EXPOSED
+		
+		#set up and attach the viewports
+		self.viewport1 = depth_confusion.viewport.Viewport(self._screen, placement = (50, 50), scene_dimensions = (300, 200))
+		self.viewport2 = depth_confusion.viewport.Viewport(self._screen, placement = (400, 0), scene_dimensions = (200, 100))
+		self.viewport1.attach_to_world(self.world)
+		self.viewport2.attach_to_world(self.world)
 		
 		return True
 	
 	
 	def on_update(self):
-		self._camera.apply_camera(self.world)
+		#self._camera.apply_camera(self.world)
+		pass
 	
 	
 	def on_event(self, event):
@@ -66,12 +75,13 @@ class Game:
 		elif event.type == pygame.MOUSEMOTION:
 			#print 'pos: {0}, rel: {1}, buttons:{2}'.format(event.pos, event.rel, event.buttons)
 			if event.buttons[2] == 1:
-				self._camera.move_camera(event.rel)
+				#self._camera.move_camera(event.rel)
+				self.viewport1.pan_view(event.rel)
 		
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			#print event.button
 			if event.button == 1:
-				coordinate = self.world.map_to_world(event.pos)
+				coordinate = self.world.map_to_world(self.viewport1.screen_to_global(event.pos))
 				voxel = self.world[coordinate]
 				if voxel:
 					voxel.highlight()
@@ -83,15 +93,17 @@ class Game:
 				self.world.scroll_layer(-1)
 			
 			elif event.button == 3:
-				coordinate = self.world.map_to_world(event.pos)
+				coordinate = self.world.map_to_world(self.viewport1.screen_to_global(event.pos))
 				if self.world.is_voxel_rendered(coordinate):
 					del self.world[coordinate]
 				
 	
 	
 	def on_render(self):
-		self._screen.blit(self._background, (0, 0))
-		self.world.on_render(self._screen)
+		#self._screen.blit(self._background, (0, 0))
+		#self.world.on_render(self._screen)
+		self.viewport1.on_render()
+		self.viewport2.on_render()
 		pygame.display.flip()
 	
 	
