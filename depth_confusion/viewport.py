@@ -37,9 +37,11 @@ class Viewport(object):
 			print scene_dimensions
 		
 		self.scene = pygame.Surface(scene_dimensions)
+		self.scene_rect = self.scene.get_rect()
 		
 		#the placement of the viewport in terms of global coordinates
 		self.scene_placement = (0, 0)
+		self.scene_scale = 2
 		
 		self.bg_color = bg_color
 	
@@ -48,6 +50,7 @@ class Viewport(object):
 		self.scene.fill(self.bg_color)
 		if self._world:
 			self._world.on_render(self)
+			#self.blit_scene = pygame.transform.scale(self.scene, (int(self.scene_rect.w * self.scene_scale), int(self.scene_rect.h * self.scene_scale)))
 			self.screen.blit(self.scene, self.screen_placement)
 	
 	
@@ -71,16 +74,17 @@ class Viewport(object):
 	def global_to_scene(self, global_coordinates):
 		if isinstance(global_coordinates, pygame.Rect):
 			(gx, gy) = global_coordinates.topleft
+			(w, h) = global_coordinates.size
 		
 		else:
 			(gx, gy) = global_coordinates
 		
 		#Do the translation here
-		scn_x = self.scene_placement[X] + gx
-		scn_y = self.scene_placement[Y] + gy
+		scn_x = int((self.scene_placement[X] + gx) * self.scene_scale)
+		scn_y = int((self.scene_placement[Y] + gy) * self.scene_scale)
 		
 		if isinstance(global_coordinates, pygame.Rect):
-			return pygame.Rect((scn_x, scn_y), global_coordinates.size)
+			return pygame.Rect((scn_x, scn_y), (int(w * self.scene_scale), int(h * self.scene_scale)))
 		
 		else:
 			return (scn_x, scn_y)
@@ -89,16 +93,17 @@ class Viewport(object):
 	def scene_to_global(self, scene_coordinates):
 		if isinstance(scene_coordinates, pygame.Rect):
 			(scn_x, scn_y) = scene_coordinates.topleft
+			(w, h) = scene_coordinates.size
 		
 		else:
 			(scn_x, scn_y) = scene_coordinates
 		
 		#Do the translation here
-		gx = scn_x - self.scene_placement[X]
-		gy = scn_y - self.scene_placement[Y]
+		gx = int(scn_x / self.scene_scale) - self.scene_placement[X]
+		gy = int(scn_y / self.scene_scale) - self.scene_placement[Y]
 		
 		if isinstance(scene_coordinates, pygame.Rect):
-			return pygame.Rect((gx, gy), scene_coordinates.size)
+			return pygame.Rect((gx, gy), (int(w * self.scene_scale), int(h * self.scene_scale)))
 		
 		else:
 			return (gx, gy)

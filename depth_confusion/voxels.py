@@ -59,8 +59,8 @@ class VoxelWorld(WorldBase):
 			#Make sure it does not render anything else
 			if isinstance(voxel, ElementaryVoxel):
 				#Also make sure that only voxels in the view are rendered
-				if viewport.scene.get_rect().colliderect(viewport.global_to_scene(voxel.rect)):
-					voxel.on_render(viewport.scene, viewport.scene_placement)
+				if viewport.scene_to_global(viewport.scene.get_rect()).colliderect(viewport.global_to_scene(voxel.rect)):
+					voxel.on_render(viewport)
 	
 	
 	def on_event(self, event):
@@ -215,7 +215,7 @@ class ElementaryVoxel(GridElement):
 		pass
 	
 	
-	def on_render(self, target_surface, translation):
+	def on_render(self, viewport):
 		"""
 		How the voxel gets rendered
 		"""
@@ -294,31 +294,38 @@ class Block(ElementaryVoxel):
 			self._rendered = True
 	
 	
-	def on_render(self, target_surface, translation):
+	def on_render(self, viewport):
 		if not self._rendered:
 			return
 		
-		coordinates = (self._screen_coordinates[0] + translation[0], self._screen_coordinates[1] + translation[1])
+		
+		coordinates = (int((self._screen_coordinates[X] + viewport.scene_placement[X]) * viewport.scene_scale), int((self._screen_coordinates[Y] + viewport.scene_placement[Y]) * viewport.scene_scale))
+		
+		target_surface = pygame.Surface(self.rect.size, flags = pygame.SRCALPHA)
+		
 		#blit the base image
-		target_surface.blit(self._world.resource_handler.get_image(self._voxel_id), coordinates)
+		target_surface.blit(self._world.resource_handler.get_image(self._voxel_id), (0, 0))
 		
 		#blit the dark outlines
 		(mx, my, mz) = self._coordinates
 		for i in xrange(len(self._dark_outline)):
 			if self._dark_outline[i]:
-				target_surface.blit(self._world.resource_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
+				target_surface.blit(self._world.resource_handler.get_image('overlay-dark-outline-{0}'.format(i)), (0, 0))
 			
 			elif (i == 0 or i == 1) and self._world.is_top_layer((mx, my, mz)):
 				if i == 0 and not self._world.is_voxel_rendered((mx, my - 1, mz)):
-					target_surface.blit(self._world.resource_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
+					target_surface.blit(self._world.resource_handler.get_image('overlay-dark-outline-{0}'.format(i)), (0, 0))
 				
 				elif i == 1 and not self._world.is_voxel_rendered((mx - 1, my, mz)):
-					target_surface.blit(self._world.resource_handler.get_image('overlay-dark-outline-{0}'.format(i)), coordinates)
+					target_surface.blit(self._world.resource_handler.get_image('overlay-dark-outline-{0}'.format(i)), (0, 0))
 		
 		#blit the highlight
 		#NOTE: do not rely on this it will be removed
 		if self._highlighted:
-			target_surface.blit(self._world.resource_handler.get_image('overlay-yellow-highlight'), coordinates)
+			target_surface.blit(self._world.resource_handler.get_image('overlay-yellow-highlight'), (0, 0))
+		
+		target_surface = pygame.transform.scale(target_surface, (int(self.rect.w * viewport.scene_scale), int(self.rect.h * viewport.scene_scale)))
+		viewport.scene.blit(target_surface, coordinates)
 	
 	
 	def on_create(self):
