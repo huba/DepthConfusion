@@ -7,6 +7,7 @@ Author: Huba Nagy
 import pygame
 from common_util import *
 from world_base import *
+import mpmath as mp
 
 
 
@@ -32,8 +33,6 @@ class VoxelWorld(WorldBase):
 	def scroll_layer(self, dl):
 		if self._world_dimensions[DEPTH] > (self._active_layer + dl) > -1:
 			self._active_layer += dl
-                
-                print "layer is now", self._active_layer
 	
 	
 	def on_update(self):
@@ -55,7 +54,6 @@ class VoxelWorld(WorldBase):
 		This function calls the render function of all voxels onto a given viewport
 		"""
 		for mx, my, mz, voxel in self:
-                        print mz, self._active_layer
 			if self.visibility_flag == ONLY_SHOW_EXPOSED and mz > self._active_layer:
 				return
 			
@@ -123,46 +121,37 @@ class VoxelWorld(WorldBase):
 	def global_to_map(self, global_coordinates):
 		"""
 		Maps global coordinates to map coordinates. Mainly used to tell which 
-		voxel the mouse pointer is on.
+		voxel the mouse pointer is on. Implementation based on article:
+                http://www.alcove-games.com/advanced-tutorials/isometric-tile-picking/
 		"""
 		(gx, gy) = global_coordinates
-		# DON'T Apply translation to screen coordinates
-		#gx -= self._translation[0]
-		#gy -= self._translation[1]
 		
-		#Calculate rough x, y, z coordinate in the map
-		mx = ((gy + self._active_layer * self._voxel_dimensions[DEPTH]) / (self._voxel_dimensions[HEIGHT] / 2) - gx / (self._voxel_dimensions[WIDTH] / 2)) / 2
-		my = (gx / (self._voxel_dimensions[WIDTH] / 2) + (gy + self._active_layer * self._voxel_dimensions[DEPTH]) / (self._voxel_dimensions[HEIGHT] / 2) ) / 2
-		mz = self._active_layer
-		
-		#Calculate where the corner of the image is
-		cx, cy = self.map_to_global(mx, my, mz)
-		#calculate where the screen cordinate is relative to the corner of the image
-		ix, iy = gx - cx, gy - cy
-		
-		#print 'corner: {0}, {1}'.format(cx, cy)
-		#print 'image: {0}, {1}'.format(ix, iy)
-		
-		#Check the image coordinate accuired above against the mouse helper image
-		#and make corrections to the map coordinates if necessary
-		pixel_array = pygame.PixelArray(self.resource_handler.get_image('mouse-help'))
-		pixel_color = pygame.Color(pixel_array[ix][iy])
-		#print pixel_color
-		if pixel_color == TEST_RED:
-			#print 'got red'
-			my -= 1
-		
-		elif pixel_color == TEST_GREEN:
-			#print 'got green'
-			mx -= 1
-		
-		elif pixel_color == TEST_BLUE:
-			#print 'got blue'
-			my += 1
-		
-		elif pixel_color == TEST_YELLOW:
-			#print 'got yellow'
-			mx += 1
+                #REVERSE ISOMETRIC PROJECTION:
+                #Rotation angle 135 degrees
+                theta = 3 * mp.pi / 4
+                
+                #length of a side before iso projection
+                side_length = mp.nint(self._voxel_dimensions[WIDTH] * mp.sin(mp.pi / 4))
+                
+                #rotate by angle
+                unrotate = mp.matrix([[ mp.cos(theta), -mp.sin(theta), 0],
+                                      [ mp.sin(theta),  mp.cos(theta), 0],
+                                      [             0,              0, 1]])
+                
+                #unsquash vertically
+                unsquash = mp.matrix([[1, 0, 0],
+                                      [0, 2, 0],
+                                      [0, 0, 1]])
+                
+                #depth info comes from the currently activated layer
+                mz = self._active_layer
+                #turn the global coordinates into an affine matrix
+                g_coord = mp.matrix([[gx], [gy + mz * self._voxel_dimensions[DEPTH]], [1]])
+                g_coord = unrotate * (unsquash * g_coord)
+                
+                #divide and round the coordinates to get integer indexes.
+		mx = - int(mp.nint(g_coord[1]) / side_length)
+                my = - int(mp.nint(g_coord[0]) / side_length)
 		
 		return (mx, my, mz)
 	
@@ -170,9 +159,9 @@ class VoxelWorld(WorldBase):
 	def map_to_global(self, mx, my, mz):
 		"""
 		Maps world coordinates the coordinates of the top left corner of the image on the world surface.
-		No translation is applied yet.
+		No translation is applied yet. NOTE all the translation happens in the viewport.
 		"""
-		gx = - mx * (self._voxel_dimensions[WIDTH] / 2) + my * (self._voxel_dimensions[WIDTH] / 2)
+		gx = - mx * (self._voxel_dimensions[WIDTH] / 2) + my * (self._voxel_dimensions[WIDTH] / 2) - (self._voxel_dimensions[WIDTH] / 2)
 		gy = my * (self._voxel_dimensions[HEIGHT] / 2)  + mx * (self._voxel_dimensions[HEIGHT] / 2) - mz * self._voxel_dimensions[DEPTH]
 		
 		return (gx, gy)
