@@ -3,7 +3,7 @@ This module is where all the dark magic used for transformations
 and translation between screen and scene coordinates lives.
 
 Also I think I should elaborate on some of my coordinate naming here:
-*map coordinates are the integer coordinates for referencing elements in a grid
+*map/grid coordinates are the integer coordinates for referencing elements in a grid
 *global coordinates are pixel coordinates that are relative to the top left
 corner of the entire world's image
 *scene coordinates are coordinates relative to the top left corner of the viewport
@@ -41,7 +41,7 @@ class Viewport(object):
 		
 		#the placement of the viewport in terms of global coordinates
 		self.scene_placement = (0, 0)
-		self.scene_scale = 2
+		self.scene_scale = 1
 		
 		self.bg_color = bg_color
 	
@@ -69,6 +69,12 @@ class Viewport(object):
 		Changes the xy coordinates of the scene by the xy coordinates of the delta
 		"""
 		self.scene_placement = (self.scene_placement[X] + delta[X], self.scene_placement[Y] + delta[Y])
+        
+        
+        def center_on(self, coordinate):
+            """Centers view on given coordinate"""
+            #TODO: implement this, first need to sort out zooming though...
+            pass
 	
 	
 	def global_to_scene(self, global_coordinates):
@@ -156,6 +162,8 @@ class Viewport(object):
 		g_x = scr_x - self.screen_placement[X] - self.scene_placement[X]
 		g_y = scr_y - self.screen_placement[Y] - self.scene_placement[Y]
 		
+                #print "clicked on {}".format((g_x, g_y))
+                
 		if isinstance(screen_coordinates, pygame.Rect):
 			return pygame.Rect((g_x, g_y), screen_coordinates.size)
 		

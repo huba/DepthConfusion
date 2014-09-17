@@ -32,6 +32,8 @@ class VoxelWorld(WorldBase):
 	def scroll_layer(self, dl):
 		if self._world_dimensions[DEPTH] > (self._active_layer + dl) > -1:
 			self._active_layer += dl
+                
+                print "layer is now", self._active_layer
 	
 	
 	def on_update(self):
@@ -41,9 +43,9 @@ class VoxelWorld(WorldBase):
 	
 	
 	def __iter__(self):
-		for mx in xrange(self._world_dimensions[WIDTH]):
+		for mz in xrange(self._world_dimensions[WIDTH]):
 			for my in xrange(self._world_dimensions[HEIGHT]):
-				for mz in xrange(self._world_dimensions[DEPTH]):
+				for mx in xrange(self._world_dimensions[DEPTH]):
 					voxel = self[(mx, my, mz)]
 					yield mx, my, mz, voxel
 	
@@ -53,14 +55,15 @@ class VoxelWorld(WorldBase):
 		This function calls the render function of all voxels onto a given viewport
 		"""
 		for mx, my, mz, voxel in self:
-			if self.visibility_flag == ONLY_SHOW_EXPOSED and mz > self._active_layer + 1:
-				   return
+                        print mz, self._active_layer
+			if self.visibility_flag == ONLY_SHOW_EXPOSED and mz > self._active_layer:
+				return
 			
 			#Make sure it does not render anything else
 			if isinstance(voxel, ElementaryVoxel):
 				#Also make sure that only voxels in the view are rendered
-				if viewport.scene_to_global(viewport.scene.get_rect()).colliderect(viewport.global_to_scene(voxel.rect)):
-					voxel.on_render(viewport)
+				#if viewport.scene_to_global(viewport.scene.get_rect()).colliderect(viewport.global_to_scene(voxel.rect)):
+				voxel.on_render(viewport)
 	
 	
 	def on_event(self, event):

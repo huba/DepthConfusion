@@ -90,6 +90,7 @@ class WorldBase(object):
 		Replaces the element at the given grid coordinate with
 		the void type element of the element_class_handler...
 		"""
+                self[coordinate].on_destroy()
 		self[coordinate] = self.element_class_handler.construct_element('void')
 	
 	
