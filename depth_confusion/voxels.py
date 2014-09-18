@@ -25,6 +25,9 @@ class VoxelWorld(WorldBase):
 		
 		self._active_layer = active_layer
 		self.visibility_flag = visibility_flag
+                
+                #The unprojected length of the horizontal side of each voxel
+                self._side_length = mp.nint(self._voxel_dimensions[WIDTH] * mp.sin(mp.pi / 4))
 		
 		WorldBase.__init__(self, resource_handler, voxel_handler,
 		                   grid_length, (0, 0))
@@ -126,32 +129,20 @@ class VoxelWorld(WorldBase):
 		"""
 		(gx, gy) = global_coordinates
 		
-                #REVERSE ISOMETRIC PROJECTION:
-                #Rotation angle 135 degrees
-                theta = 3 * mp.pi / 4
-                
-                #length of a side before iso projection
-                side_length = mp.nint(self._voxel_dimensions[WIDTH] * mp.sin(mp.pi / 4))
-                
-                #rotate by angle
-                unrotate = mp.matrix([[ mp.cos(theta), -mp.sin(theta), 0],
-                                      [ mp.sin(theta),  mp.cos(theta), 0],
-                                      [             0,              0, 1]])
-                
-                #unsquash vertically
-                unsquash = mp.matrix([[1, 0, 0],
-                                      [0, 2, 0],
-                                      [0, 0, 1]])
-                
                 #depth info comes from the currently activated layer
                 mz = self._active_layer
-                #turn the global coordinates into an affine matrix
-                g_coord = mp.matrix([[gx], [gy + mz * self._voxel_dimensions[DEPTH]], [1]])
-                g_coord = unrotate * (unsquash * g_coord)
+                
+                #turn the global coordinates into a homogenous vector
+                g_coord = mp.matrix([[gx], 
+                                     [gy + mz * self._voxel_dimensions[DEPTH]], 
+                                     [1]])
+                
+                #Apply the isometric unprojection matrix from common_util
+                g_coord = UNPROJECT * g_coord
                 
                 #divide and round the coordinates to get integer indexes.
-		mx = - int(mp.nint(g_coord[1]) / side_length)
-                my = - int(mp.nint(g_coord[0]) / side_length)
+		mx = int(mp.nint(g_coord[X]) / self._side_length)
+                my = int(mp.nint(g_coord[Y]) / self._side_length)
 		
 		return (mx, my, mz)
 	
