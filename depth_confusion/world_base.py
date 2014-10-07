@@ -57,13 +57,13 @@ class WorldBase(object):
 			grid_element.on_create()
 		
 		except OutOfIt as out_of_this_world:
-			print out_of_this_world
+			print(out_of_this_world)
 		
-		except ValueError as value_error:
-			print 'Not enough digits in the coordinate {0}!'.format(coordinate)
+		except ValueError:
+			print('Not enough digits in the coordinate {0}!'.format(coordinate))
 		
-		except TypeError as type_error:
-			print 'Not enough digits in the coordinate {0}!'.format(coordinate)
+		except TypeError:
+			print('Not enough digits in the coordinate {0}!'.format(coordinate))
 	
 	
 	def __getitem__(self, coordinate):
@@ -79,10 +79,10 @@ class WorldBase(object):
 			return self._grid[index]
 		
 		except OutOfIt as out_of_this_world:
-			print out_of_this_world
+			print(out_of_this_world)
 		
-		except ValueError as value_error:
-			print 'Not enough digits in the coordinate {0}!'.format(coordinate)
+		except ValueError:
+			print('Not enough digits in the coordinate {0}!'.format(coordinate))
 	
 	
 	def __delitem__(self, coordinate):

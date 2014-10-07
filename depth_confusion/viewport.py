@@ -12,7 +12,7 @@ corner of the entire world's image
 Author: Huba Nagy
 """
 import pygame
-import numpy
+import mpmath as mp
 from common_util import *
 
 class Viewport(object):
@@ -20,7 +20,7 @@ class Viewport(object):
 	This object keeps track of transformations, you can blit it anywhere on the screen
 	it is esentially a viewport. It can be attached to a World object.
 	This will later be part of a possible gui api. One day...
-	#TODO: implement transformations using numpy. ATM I'm just figuring out what should happen.
+	#TODO: implement transformations using mpmath. ATM I'm just figuring out what should happen.
 	"""
 	def __init__(self, screen, placement = (0, 0), scene_dimensions = None, bg_color = (100, 100, 100)):
 		self._world = None
@@ -29,12 +29,14 @@ class Viewport(object):
 		#the placement of the final image of the scene on the screen defaults to the top left corner
 		#these are screen coordinates
 		self.screen_placement = placement
+                self.scr_t = mp.matrix([[1, 0, placement[X]],
+                                        [0, 1, placement[Y]],
+                                        [0, 0,            1]])
 		
 		#Scene is a surface which everything in the world is blitted onto
 		if not scene_dimensions:
 			#the scene's width and height defaults to the width and height of the screen
 			scene_dimensions = (screen.get_width(), screen.get_height())
-			print scene_dimensions
 		
 		self.scene = pygame.Surface(scene_dimensions)
 		self.scene_rect = self.scene.get_rect()
@@ -141,8 +143,8 @@ class Viewport(object):
 			(scr_x, scr_y) = screen_coordinates
 		
 		#Do the translation here
-		scn_x = scr_x + self.screen_placement[X]
-		scn_y = scr_y + self.screen_placement[Y]
+		scn_x = (scr_x + self.screen_placement[X])
+		scn_y = (scr_y + self.screen_placement[Y])
 		
 		if isinstance(screen_coordinates, pygame.Rect):
 			return pygame.Rect((scn_x, scn_y), screen_coordinates.size)
@@ -161,7 +163,7 @@ class Viewport(object):
 		#Do the translation here
 		g_x = scr_x - self.screen_placement[X] - self.scene_placement[X]
 		g_y = scr_y - self.screen_placement[Y] - self.scene_placement[Y]
-		
+                
                 #print "clicked on {}".format((g_x, g_y))
                 
 		if isinstance(screen_coordinates, pygame.Rect):

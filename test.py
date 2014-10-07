@@ -51,14 +51,14 @@ class Game:
 		image_handler = depth_confusion.resource_loader.load_image_pack('example_image_pack/pack.json')
 		
 		#generate the world
-		self.world = depth_confusion.world_generator.generate_flat((4, 4, 4), 3, voxel_handler, image_handler, 'grass-block')
+		self.world = depth_confusion.world_generator.generate_flat((8, 8, 8), 3, voxel_handler, image_handler, 'grass-block')
 		self.world.visibility_flag = depth_confusion.voxels.ONLY_SHOW_EXPOSED
 		
 		#set up and attach the viewports
-		self.viewport1 = depth_confusion.viewport.Viewport(self._screen, placement = (50, 50), scene_dimensions = (300, 200))
-		self.viewport2 = depth_confusion.viewport.Viewport(self._screen, placement = (400, 0), scene_dimensions = (200, 100))
+		self.viewport1 = depth_confusion.viewport.Viewport(self._screen)
+		#self.viewport2 = depth_confusion.viewport.Viewport(self._screen, placement = (400, 0), scene_dimensions = (200, 100))
 		self.viewport1.attach_to_world(self.world)
-		self.viewport2.attach_to_world(self.world)
+		#self.viewport2.attach_to_world(self.world)
 		
 		return True
 	
@@ -103,7 +103,7 @@ class Game:
 		#self._screen.blit(self._background, (0, 0))
 		#self.world.on_render(self._screen)
 		self.viewport1.on_render()
-		self.viewport2.on_render()
+		#self.viewport2.on_render()
 		pygame.display.flip()
 	
 	
